@@ -5,6 +5,8 @@ import { LiaHammerSolid } from "react-icons/lia"
 import { LuBookMinus, LuPaperclip } from "react-icons/lu"
 import { PiPalette } from "react-icons/pi"
 import { IoImageOutline } from "react-icons/io5";
+import { FiHeart } from "react-icons/fi";
+import { FaLastfm } from "react-icons/fa6";
 
 export const getCategoriesFromCommands: (commands: Command[]) => Category[] = commands => {
     const categories: Category[] = []
@@ -41,23 +43,23 @@ export const getCategoriesFromCommands: (commands: Command[]) => Category[] = co
 
 export const BaseCategories: BaseCategory[] = [
     {
-        name: "Servers",
+        name: "servers",
         icon: <IoSettingsOutline />
     },
     {
-        name: "Information",
+        name: "information",
         icon: <LuBookMinus />
     },
     {
-        name: "Utility",
+        name: "misc",
         icon: <LuPaperclip />
     },
     {
-        name: "Fun",
+        name: "fun",
         icon: <PiPalette />
     },
     {
-        name: "Moderation",
+        name: "moderation",
         icon: <LiaHammerSolid />
     },
     {
@@ -67,5 +69,13 @@ export const BaseCategories: BaseCategory[] = [
     {
         name: "Music",
         icon: <BiMusic />
+    },
+    {
+        name: "roleplay",
+        icon: <FiHeart />
+    },
+    {
+        name: "lastfm",
+        icon: <FaLastfm />
     }
 ]
