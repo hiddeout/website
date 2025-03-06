@@ -1,0 +1,182 @@
+"use client"
+
+import BackToTopButton from "@/components/TopButton"
+import { CategorySelector } from "@/components/commands/CommandSelector"
+import { Search, TerminalSquareIcon } from "lucide-react"
+import { useRef, useState } from "react"
+import type { Category, Command } from "@/types/Command"
+import { FaRegFolderClosed } from "react-icons/fa6"
+import { LuCopy } from "react-icons/lu"
+import { SearchMenu } from "./SearchMenu"
+
+export const CommandsPage = ({
+    commands,
+    categories
+}: {
+    commands: Command[] | null
+    categories: Category[] | null
+}) => {
+    const searchBackgroundRef = useRef<HTMLDivElement>(null)
+    const [isSearchMenuOpen, setSearchMenuOpen] = useState(false)
+    const [activeCategory, setActiveCategory] = useState("Moderation")
+
+    if (!commands || !categories) {
+        return (
+            <div className="max-w-5xl mx-auto p-6">
+                <div className="flex flex-col items-center justify-center min-h-[60vh] rounded-3xl 
+                              bg-stmp-200/50 backdrop-blur-sm border border-stmp-card-border/30">
+                    <FaRegFolderClosed className="text-7xl text-stmp-main/30 animate-pulse" />
+                    <p className="mt-4 text-xl font-medium text-stmp-main/50">No Commands Found</p>
+                </div>
+            </div>
+        )
+    }
+
+    const activeCommands = commands.filter(command => command.category === activeCategory)
+
+    return (
+        <div className="p-6">
+            <div className="w-full max-w-5xl mx-auto space-y-8">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                        <div className="p-3.5 rounded-2xl bg-gradient-to-br from-stmp-200 to-stmp-300 
+                                      shadow-lg shadow-stmp-300/10">
+                            <TerminalSquareIcon className="w-6 h-6 text-white" />
+                        </div>
+                        <div>
+                            <h1 className="text-2xl font-bold text-white">Commands</h1>
+                            <p className="text-sm text-stmp-main/70 mt-0.5">Browse available bot commands</p>
+                        </div>
+                    </div>
+
+                    <button
+                        onClick={() => setSearchMenuOpen(true)}
+                        className="p-3.5 rounded-2xl bg-stmp-200/80 hover:bg-stmp-300/80 
+                                 border border-stmp-card-border/30 transition-all duration-200
+                                 group flex items-center gap-3 hover:scale-105"
+                    >
+                        <Search className="w-5 h-5 text-stmp-main group-hover:text-white transition-colors" />
+                        <span className="hidden sm:block text-sm font-medium text-stmp-main 
+                                     group-hover:text-white transition-colors">
+                            Search Commands
+                        </span>
+                    </button>
+                </div>
+
+                <CategorySelector
+                    categories={categories}
+                    selected={activeCategory}
+                    onClick={setActiveCategory}
+                />
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {activeCommands.map(command => (
+                        <Command
+                            key={command.name}
+                            name={command.name}
+                            description={command.description || "No Description"}
+                            args={command.parameters || ["None"]}
+                            aliases={["None"]}
+                            permissions={command.permissions || ["None"]}
+                        />
+                    ))}
+                </div>
+            </div>
+
+            {isSearchMenuOpen && (
+                <>
+                    <div
+                        ref={searchBackgroundRef}
+                        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 
+                                 transition-opacity duration-200"
+                        onClick={() => setSearchMenuOpen(false)}
+                    />
+                    <SearchMenu
+                        onClose={() => setSearchMenuOpen(false)}
+                        changeActiveCategory={setActiveCategory}
+                        commands={commands}
+                        categories={categories}
+                    />
+                </>
+            )}
+            <BackToTopButton />
+        </div>
+    )
+}
+
+const Command = ({
+    name,
+    description,
+    args,
+    permissions
+}: {
+    name: string
+    description: string
+    args: string[]
+    aliases: string[]
+    permissions: string[]
+}) => {
+    return (
+        <div
+            id={name}
+            className="group relative flex flex-col p-6 rounded-3xl 
+                      bg-gradient-to-b from-stmp-200/90 to-stmp-200/80
+                      backdrop-blur-md border
+                      transition-all duration-300 ease-in-out
+                      hover:scale-[1.02] hover:shadow-xl
+                      border-stmp-card-border/30 hover:border-stmp-card-border/50"
+        >
+            <div className="relative h-full flex flex-col justify-between space-y-4">
+                <div>
+                    <div className="flex items-start justify-between gap-x-4">
+                        <p className="text-xl font-bold tracking-tight text-white/90">{name}</p>
+                        <button
+                            onClick={() => navigator.clipboard.writeText(name)}
+                            className="p-2 rounded-xl bg-stmp-300/30 hover:bg-stmp-300/50 
+                                     transition-all duration-200 text-stmp-main hover:text-white
+                                     hover:scale-110"
+                        >
+                            <LuCopy size={18} />
+                        </button>
+                    </div>
+                    <p className="mt-2 text-sm text-stmp-main/80 font-medium leading-relaxed">
+                        {description}
+                    </p>
+                </div>
+
+                <div className="w-full h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+
+                <div className="space-y-4">
+                    <div>
+                        <p className="text-sm font-medium text-stmp-main mb-2">Arguments</p>
+                        <div className="flex flex-wrap gap-2">
+                            {args.map((arg, i) => (
+                                <span key={i} 
+                                      className="px-3 py-1.5 text-sm rounded-xl bg-stmp-300/40 
+                                               text-white/70 transition-colors hover:bg-stmp-300/60">
+                                    {arg.replaceAll("_", " ")}
+                                </span>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div>
+                        <p className="text-sm font-medium text-stmp-main mb-2">Permissions</p>
+                        <div className="flex flex-wrap gap-2">
+                            {permissions.map((perm, i) => (
+                                <span key={i} 
+                                      className="px-3 py-1.5 text-sm rounded-xl bg-stmp-300/40 
+                                               text-white/70 transition-colors hover:bg-stmp-300/60 
+                                               capitalize">
+                                    {perm === "N/A" ? "None" : perm.replaceAll("_", " ")}
+                                </span>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    )
+}
+
+export default CommandsPage

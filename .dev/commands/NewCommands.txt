@@ -1,0 +1,185 @@
+"use client"
+import { useRef, useState } from "react"
+import { Search, TerminalSquareIcon } from "lucide-react"
+import { FaRegFolderClosed } from "react-icons/fa6"
+import { LuCopy } from "react-icons/lu"
+import type { Category, Command } from "@/types/Command"
+import { CategorySelector } from "@/components/commands/CommandSelector"
+import BackToTopButton from "@/components/TopButton"
+import { SearchMenu } from "./SearchMenu"
+
+interface CommandProps {
+    key: string;
+    name: string;
+    description: string;
+    args: string[];
+    aliases: string[];  // Added this property
+    permissions: string[];
+}
+
+export const CommandsPage = ({
+    commands,
+    categories
+}: {
+    commands: Command[] | null
+    categories: Category[] | null
+}) => {
+    const searchBackgroundRef = useRef<HTMLDivElement>(null)
+    const [isSearchMenuOpen, setSearchMenuOpen] = useState(false)
+    const [activeCategory, setActiveCategory] = useState("Moderation")
+
+    if (!commands || !categories) {
+        return (
+            <div className="min-h-screen bg-gradient-to-b from-stmp-100/5 to-transparent">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+                    <BackToTopButton />
+                    <div className="flex flex-row justify-between items-center">
+                        <div className="flex justify-center items-center space-x-4">
+                            <div className="rounded-2xl p-4 border border-stmp-card-border/50 bg-stmp-200/80 backdrop-blur-sm shadow-lg">
+                                <TerminalSquareIcon size={28} className="text-stmp-main" />
+                            </div>
+                            <h1 className="text-3xl font-bold text-white tracking-tight sm:text-4xl">Commands</h1>
+                        </div>
+                        <button
+                            onClick={() => setSearchMenuOpen(true)}
+                            className="group flex items-center gap-2 px-4 py-2 rounded-xl border border-stmp-card-border/50 bg-stmp-200/80 hover:bg-stmp-200/90 transition-all duration-300 backdrop-blur-sm"
+                        >
+                            <Search size={20} className="text-stmp-main" />
+                            <span className="text-sm text-neutral-400 group-hover:text-neutral-300">Search...</span>
+                        </button>
+                    </div>
+                    <div className="flex flex-col items-center justify-center mt-20">
+                        <FaRegFolderClosed className="text-8xl text-neutral-700 rotate-12" />
+                        <p className="text-xl font-medium text-neutral-500 mt-6">No Commands Found</p>
+                    </div>
+                </div>
+            </div>
+        )
+    }
+
+    return (
+        <>
+            {isSearchMenuOpen && (
+                <>
+                    <div
+                        ref={searchBackgroundRef}
+                        className="fixed inset-0 bg-black/50 z-[60] backdrop-blur-sm"
+                        onClick={() => setSearchMenuOpen(false)}
+                    />
+                    <SearchMenu
+                        onClose={() => setSearchMenuOpen(false)}
+                        changeActiveCategory={(category: string) => setActiveCategory(category)}
+                        commands={commands}
+                        categories={categories}
+                    />
+                </>
+            )}
+            <div className="min-h-screen bg-gradient-to-b from-stmp-100/5 to-transparent">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+                    <BackToTopButton />
+                    <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-12">
+                        <div className="flex items-center gap-4">
+                            <div className="rounded-2xl p-4 border border-stmp-card-border/50 bg-stmp-200/80 backdrop-blur-sm shadow-lg">
+                                <TerminalSquareIcon size={28} className="text-stmp-main" />
+                            </div>
+                            <h1 className="text-3xl font-bold text-white tracking-tight sm:text-4xl">Commands</h1>
+                        </div>
+                        <button
+                            onClick={() => setSearchMenuOpen(true)}
+                            className="group flex items-center gap-2 px-4 py-2 rounded-xl border border-stmp-card-border/50 bg-stmp-200/80 hover:bg-stmp-200/90 transition-all duration-300 backdrop-blur-sm"
+                        >
+                            <Search size={20} className="text-stmp-main" />
+                            <span className="text-sm text-neutral-400 group-hover:text-neutral-300">Search commands...</span>
+                        </button>
+                    </header>
+
+                    <CategorySelector
+                        categories={categories}
+                        selected={activeCategory}
+                        onClick={(category: string) => setActiveCategory(category)}
+                    />
+
+                    <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {commands
+                            .filter(command => command.category === activeCategory)
+                            .map(command => (
+                                <Command
+                                    key={command.name}
+                                    name={command.name}
+                                    description={command.description || "No Description"}
+                                    args={command.parameters ?? ["None"]}
+                                    aliases={["None"]}
+                                    permissions={command.permissions ?? ["None"]}
+                                />
+                            ))}
+                    </div>
+                </div>
+            </div>
+        </>
+    )
+}
+
+const Command = ({name, description, args, permissions}: CommandProps) => {
+    return (
+        <div
+            id={name}
+            className="group flex flex-col p-6 rounded-2xl bg-stmp-200/80 backdrop-blur-sm border 
+                       transition-all duration-300 ease-out border-stmp-card-border/50 text-white
+                       hover:border-stmp-card-border hover:bg-stmp-200/90 hover:shadow-lg hover:shadow-stmp-main/5"
+        >
+            <div className="relative h-full flex flex-col justify-between gap-6">
+                <div>
+                    <div className="flex items-start justify-between gap-x-4 mb-3">
+                        <div className="flex items-center gap-2">
+                            <h3 className="text-xl font-semibold tracking-tight text-white">{name}</h3>
+                        </div>
+                        <button
+                            data-clipboard-text={name}
+                            className="text-neutral-500 transition-colors duration-200 hover:text-white opacity-0 group-hover:opacity-100"
+                            onClick={() => navigator.clipboard.writeText(name)}
+                        >
+                            <LuCopy className="w-5 h-5" />
+                        </button>
+                    </div>
+                    <p className="text-sm text-stmp-secondary/90 leading-relaxed">
+                        {description}
+                    </p>
+                </div>
+
+                <div className="space-y-4">
+                    <div>
+                        <p className="text-xs uppercase tracking-wider text-stmp-main font-medium mb-2">
+                            Arguments
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                            {args.map((arg, index) => (
+                                <span
+                                    key={index}
+                                    className="text-neutral-300 text-sm py-1 px-3 rounded-full bg-stmp-300/50"
+                                >
+                                    {arg === "None" ? arg : arg.replaceAll("_", " ")}
+                                </span>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div>
+                        <p className="text-xs uppercase tracking-wider text-stmp-main font-medium mb-2">
+                            Permissions
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                            {permissions.map((permission, index) => (
+                                <span
+                                    key={index}
+                                    className="text-neutral-300 text-sm py-1 px-3 rounded-full bg-stmp-300/50 capitalize"
+                                >
+                                    {permission === "N/A" ? "None" : permission.replaceAll("_", " ")}
+                                </span>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    )
+}

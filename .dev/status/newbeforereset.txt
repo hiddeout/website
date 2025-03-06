@@ -1,0 +1,314 @@
+"use client"
+
+import { Line } from 'react-chartjs-2'
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend
+} from 'chart.js'
+import { useEffect, useState } from 'react'
+import useAxios from 'axios-hooks'
+import { HiCheckCircle } from 'react-icons/hi'
+import { FiAlertTriangle } from 'react-icons/fi'
+import { Search } from "lucide-react"
+import { GrRefresh } from "react-icons/gr"
+import { HiServerStack } from "react-icons/hi2"
+import { ImConnection } from "react-icons/im"
+import { MdOutlineTimeline } from "react-icons/md"
+import { FaUsers } from "react-icons/fa"
+import moment from "moment"
+
+interface ShardData {
+  id: string
+  guilds: string
+  users: string
+  ping: string
+  uptime: string
+}
+
+interface ApiResponse {
+  shards: ShardData[]
+  bot: {
+    uptime: number
+    status_history: Array<{
+      date: string
+      incidents: any[]
+      completion: number
+    }>
+  }
+  system: {
+    cpu: {
+      current: number
+      history: Array<{ timestamp: number; value: number }>
+    }
+    memory: {
+      current: number
+      history: Array<{ timestamp: number; value: number }>
+    }
+    latency: {
+      current: number
+      history: Array<{ timestamp: number; value: number }>
+    }
+  }
+  incidents: any[]
+}
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend
+)
+
+export default function Status() {
+  const [{ data, loading, error }, refetch] = useAxios<ApiResponse>({
+    baseURL: "https://api.stmp.dev",
+    url: "/status2"
+  })
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      refetch()
+    }, 30000)
+    return () => clearInterval(interval)
+  }, [refetch])
+
+  const [metrics, setMetrics] = useState({
+    totalUsers: 0,
+    totalGuilds: 0,
+    shardCount: 0,
+    averageLatency: 0,
+    cpuUsage: 0,
+    memoryUsage: 0,
+    botUptime: 100
+  })
+
+  const [latencyData, setLatencyData] = useState({
+    labels: [] as string[],
+    datasets: [{
+      label: 'Latency (ms)',
+      data: [] as number[],
+      borderColor: '#3b82f6',
+      backgroundColor: 'rgba(59, 130, 246, 0.3)',
+      fill: true,
+      tension: 0.4
+    }]
+  })
+
+  useEffect(() => {
+    if (data) {
+      const totalUsers = data.shards.reduce((sum, shard) =>
+        sum + parseInt(shard.users || '0'), 0)
+
+      const totalGuilds = data.shards.reduce((sum, shard) =>
+        sum + parseInt(shard.guilds || '0'), 0)
+
+      setMetrics({
+        totalUsers,
+        totalGuilds,
+        shardCount: data.shards.length,
+        averageLatency: data.system.latency.current,
+        cpuUsage: data.system.cpu.current,
+        memoryUsage: data.system.memory.current,
+        botUptime: data.bot.uptime
+      })
+
+      // Update latency graph data
+      const latencyHistory = data.system.latency.history.slice(-7)
+      setLatencyData(prevState => ({
+        ...prevState,
+        labels: latencyHistory.map(h => new Date(h.timestamp).toLocaleTimeString()),
+        datasets: [{
+          ...prevState.datasets[0],
+          data: latencyHistory.map(h => h.value)
+        }]
+      }))
+    }
+  }, [data])
+
+  const getStatusColor = (uptime: number) =>
+    uptime >= 99 ? 'green' : uptime >= 95 ? 'yellow' : 'red'
+
+  if (error) {
+    return (
+      <div className="pt-20 mx-10 text-center">
+        <FiAlertTriangle className="text-red-500 text-4xl mx-auto mb-4" />
+        <h2 className="text-xl font-bold text-white">Failed to load status data</h2>
+      </div>
+    )
+  }
+
+  return (
+    <main className="pt-20 mx-10">
+      <section className="max-w-5xl mx-auto w-full pb-20">
+        {/* Status Overview */}
+        <div className="bg-stmp-200 rounded-xl p-6 mb-8">
+          <div className="flex items-center gap-2 mb-4">
+            <HiCheckCircle className={`text-${getStatusColor(metrics.botUptime)}-500 text-2xl`} />
+            <h2 className="text-xl font-bold text-white">
+              {metrics.botUptime >= 95 ? 'All Systems Operational' : 'Partial System Outage'}
+            </h2>
+          </div>
+          <div className="flex gap-4">
+            <button className="text-stmp-main hover:text-white transition-colors">
+              Report an issue
+            </button>
+            <button className="text-stmp-main hover:text-white transition-colors">
+              Get updates
+            </button>
+          </div>
+        </div>
+
+        {/* System Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="bg-stmp-200 rounded-xl p-6">
+            <h3 className="text-lg font-semibold text-white mb-2">CPU Usage</h3>
+            <p className="text-2xl font-bold text-green-500">
+              {loading ? "Loading..." : `${metrics.cpuUsage.toFixed(1)}%`}
+            </p>
+          </div>
+          <div className="bg-stmp-200 rounded-xl p-6">
+            <h3 className="text-lg font-semibold text-white mb-2">Memory Usage</h3>
+            <p className="text-2xl font-bold text-green-500">
+              {loading ? "Loading..." : `${metrics.memoryUsage.toFixed(1)}%`}
+            </p>
+          </div>
+          <div className="bg-stmp-200 rounded-xl p-6">
+            <h3 className="text-lg font-semibold text-white mb-2">Average Latency</h3>
+            <p className="text-2xl font-bold text-green-500">
+              {loading ? "Loading..." : `${metrics.averageLatency.toFixed(1)}ms`}
+            </p>
+          </div>
+        </div>
+
+        {/* Latency Graph */}
+        <div className="bg-[#111] rounded-xl p-4 sm:p-6 mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl text-white">Latency</h2>
+            <span className="text-white">{loading ? "Loading..." : `${metrics.averageLatency.toFixed(1)}ms`}</span>
+          </div>
+          <div className="h-[200px] w-full">
+            <Line data={latencyData} options={{
+              responsive: true,
+              maintainAspectRatio: false,
+              scales: {
+                y: {
+                  beginAtZero: true,
+                  grid: {
+                    color: 'rgba(255, 255, 255, 0.1)'
+                  },
+                  ticks: {
+                    color: 'rgba(255, 255, 255, 0.7)'
+                  }
+                },
+                x: {
+                  grid: {
+                    display: false
+                  },
+                  ticks: {
+                    color: 'rgba(255, 255, 255, 0.7)'
+                  }
+                }
+              },
+              plugins: {
+                legend: {
+                  display: false
+                }
+              }
+            }} />
+          </div>
+        </div>
+
+        {/* Uptime History */}
+        <div className="bg-[#111] rounded-xl p-6">
+          <div className="flex items-start gap-2 mb-2">
+            <div className="w-2 h-2 bg-emerald-500 rounded-full mt-2"></div>
+            <div className="flex-1">
+              <div className="flex items-center justify-between">
+          <span className="text-white">Bot Uptime</span>
+          <span className="text-gray-500">{metrics.botUptime.toFixed(2)}% uptime</span>
+              </div>
+              <div className="mt-4">
+          <div className="flex gap-[2px]">
+            {data?.bot?.status_history?.slice(-90).reverse().map((day, i) => (
+              <div
+                key={i}
+                className={`flex-1 h-8 ${day.completion > 0 ? 'bg-emerald-500' : 'bg-gray-800'}`}
+                title={`${day.date}: ${day.completion}% uptime`}
+              />
+            ))}
+          </div>
+          <div className="flex justify-between mt-2">
+            <span className="text-sm text-gray-500">last 90 days</span>
+            <span className="text-sm text-gray-500">Today</span>
+          </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Shard Boxes Section */}
+        <div className="mt-8">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-xl font-bold text-white"></h2>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
+            {data?.shards.map((shard: any) => (
+              <div key={shard.id} className="flex flex-col py-6 rounded-3xl bg-stmp-200 border border-stmp-card-border text-white">
+                <div className="px-6">
+                  <div className="flex items-start justify-between gap-x-4">
+                    <p className="text-xl font-semibold">Shard {shard.id}</p>
+                    <div className="flex items-center gap-2 bg-stmp-200 border border-stmp-card-border rounded-xl px-2 py-1">
+                      <div className="w-4 h-4 bg-green-500 rounded-full animate-pulse"></div>
+                      <p className="text-lg text-green-500">Operational</p>
+                    </div>
+                  </div>
+                </div>
+                <hr className="border-t border-stmp-300 w-full my-4" />
+                <div className="grid grid-cols-2 gap-4 px-6">
+                  <div className="flex flex-col gap-2">
+                    <p className="text-md text-stmp-main">Uptime</p>
+                    <div className="flex items-center gap-2">
+                      <MdOutlineTimeline className="text-stmp-main" />
+                      <p className="text-md font-semibold">{moment.duration(Number(shard.uptime)).humanize()}</p>
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <p className="text-md text-stmp-main">Latency</p>
+                    <div className="flex items-center gap-2">
+                      <ImConnection className="text-stmp-main" />
+                      <p className="text-md font-semibold">{shard.ping}ms</p>
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <p className="text-md text-stmp-main">Servers</p>
+                    <div className="flex items-center gap-2">
+                      <HiServerStack className="text-stmp-main" />
+                      <p className="text-md font-semibold">{parseInt(shard.guilds).toLocaleString()}</p>
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <p className="text-md text-stmp-main">Users</p>
+                    <div className="flex items-center gap-2">
+                      <FaUsers className="text-stmp-main" />
+                      <p className="text-md font-semibold">{parseInt(shard.users).toLocaleString()}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    </main>
+  )
+}

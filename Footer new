@@ -1,0 +1,63 @@
+import "@/styles/globals.css"
+import Image from "next/image"
+import Link from "next/link"
+import stmp from "../../../public/stmppp.png"
+
+export const Footer = () => {
+    return (
+        <footer className="mt-[30vh] border-t border-stmp-card-border bg-[#0B0C0C] pb-10">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="flex flex-col md:flex-row justify-between items-start py-12">
+                    <div className="mb-8 md:mb-0">
+                        <Image
+                            src={stmp}
+                            alt="STMP Logo" 
+                            height={150}
+                            width={150}
+                            className="rounded-2xl"
+                        />
+                    </div>
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 md:gap-12">
+                        <div>
+                            <h3 className="text-2xl font-extrabold text-white mb-4">Bot</h3>
+                            <ul className="space-y-3">
+                                <li>
+                                    <Link href="/invite" className="text-sm font-semibold text-stmp-main hover:text-stmp-main/80">
+                                        Invite
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link href="https://docs.stmp.dev/" className="text-sm font-semibold text-stmp-main hover:text-stmp-main/80">
+                                        Documentation
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link href="https://discord.gg/stmp" className="text-sm font-semibold text-stmp-main hover:text-stmp-main/80">
+                                        Support Server
+                                    </Link>
+                                </li>
+                            </ul>
+                        </div>
+                        
+                        <div>
+                            <h3 className="text-2xl font-extrabold text-white mb-4">Legal</h3>
+                            <ul className="space-y-3">
+                                <li>
+                                    <Link href="/terms" className="text-sm font-semibold text-stmp-main hover:text-stmp-main/80">
+                                        Terms
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link href="/privacy" className="text-sm font-semibold text-stmp-main hover:text-stmp-main/80">
+                                        Privacy
+                                    </Link>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    )
+}
