@@ -7,6 +7,7 @@ import { PiPalette } from "react-icons/pi"
 import { IoImageOutline } from "react-icons/io5";
 import { FiHeart } from "react-icons/fi";
 import { FaLastfm } from "react-icons/fa6";
+import { CiCloudOn } from "react-icons/ci";
 
 export const getCategoriesFromCommands: (commands: Command[]) => Category[] = commands => {
     const categories: Category[] = []
@@ -77,5 +78,9 @@ export const BaseCategories: BaseCategory[] = [
     {
         name: "Lastfm",
         icon: <FaLastfm />
+    },
+    {
+        name: "Settings",
+        icon: <CiCloudOn />
     }
 ]
