@@ -43,23 +43,23 @@ export const getCategoriesFromCommands: (commands: Command[]) => Category[] = co
 
 export const BaseCategories: BaseCategory[] = [
     {
-        name: "servers",
+        name: "Servers",
         icon: <IoSettingsOutline />
     },
     {
-        name: "information",
+        name: "Information",
         icon: <LuBookMinus />
     },
     {
-        name: "misc",
+        name: "Misc",
         icon: <LuPaperclip />
     },
     {
-        name: "fun",
+        name: "Fun",
         icon: <PiPalette />
     },
     {
-        name: "moderation",
+        name: "Moderation",
         icon: <LiaHammerSolid />
     },
     {
@@ -71,11 +71,11 @@ export const BaseCategories: BaseCategory[] = [
         icon: <BiMusic />
     },
     {
-        name: "roleplay",
+        name: "Roleplay",
         icon: <FiHeart />
     },
     {
-        name: "lastfm",
+        name: "Lastfm",
         icon: <FaLastfm />
     }
 ]
