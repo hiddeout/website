@@ -8,7 +8,7 @@ import { Category, Command } from "@/types/Command"
 
 const Commands = () => {
     const [{ data, loading, error }] = useAxios({
-        url: "https://bucket.bleed.bot/commands.json",
+        url: "/api/commands",  // Changed to use the API route
         method: "GET"
     })
 

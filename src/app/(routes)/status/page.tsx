@@ -19,6 +19,8 @@ interface IShard {
     users: number
     ping: number
     uptime: number
+    is_ready: boolean
+    last_updated: number
 }
 
 const MetricItem = ({ label, value, icon }: { label: string; value: string; icon: React.ReactNode }) => (
@@ -38,15 +40,24 @@ const Shard = ({ shard, refetch, isHighlighted }: {
 }) => {
     const [counter, setCounter] = useState(0)
     
-    // Fix the uptime calculation
+    // Calculate uptime based on the actual timestamp
     const getUptimeDisplay = () => {
-        if (shard.uptime === 0) return "N/A"
-        return moment.duration(shard.uptime, 'seconds').humanize()
+        if (!shard.uptime) return "N/A"
+        
+        // Calculate seconds since the given timestamp
+        const now = Date.now() / 1000
+        const uptimeSeconds = now - shard.uptime
+        return moment.duration(uptimeSeconds, 'seconds').humanize()
     }
 
     const getShardStatus = () => {
-        if (shard.ping > 3000) return {
-            text: "Starting",
+        if (!shard.is_ready) return {
+            text: "Offline",
+            color: "text-red-500",
+            bgColor: "bg-red-500"
+        }
+        if (shard.ping > 1000) return {
+            text: "Degraded",
             color: "text-yellow-500",
             bgColor: "bg-yellow-500"
         }
@@ -65,6 +76,16 @@ const Shard = ({ shard, refetch, isHighlighted }: {
         }, 1000)
         return () => clearInterval(interval)
     }, [])
+
+    // Calculate time since last update
+    const lastUpdateTime = () => {
+        if (!shard.last_updated) return "Unknown"
+        
+        const now = Date.now()
+        const diff = now - shard.last_updated
+        if (diff < 1000) return "Just Now"
+        return `${Math.floor(diff / 1000)}s ago`
+    }
 
     return (
         <div
@@ -93,7 +114,7 @@ const Shard = ({ shard, refetch, isHighlighted }: {
                     <div className="flex items-center gap-2 mt-2 text-stmp-main/70">
                         <GrRefresh className="animate-spin-slow" size={16} />
                         <p className="text-sm">
-                            {counter === 0 ? "Just Now" : `${counter}s ago`}
+                            {lastUpdateTime()}
                         </p>
                     </div>
                 </div>
@@ -128,9 +149,8 @@ const Shard = ({ shard, refetch, isHighlighted }: {
 }
 
 const Status = () => {
-    // FIX: Use the proper shards endpoint
     const [{ data, loading, error }, refetch] = useAxios({
-        url: "https://bucket.bleed.bot/shards.json",
+        url: "/api/shards",  // Changed from the CDN URL to our own API route
         method: "GET"
     })
     const [highlightedShardId, setHighlightedShardId] = useState<string | null>(null)
@@ -138,14 +158,49 @@ const Status = () => {
 
     let shards: IShard[] = []
 
+    useEffect(() => {
+        console.log("API Response:", data)
+    }, [data])
+
     if (!error && data) {
-        shards = data.shards.map((shard: any) => ({
-            id: shard.shard_id.toString(),
-            guilds: shard.server_count,
-            users: shard.cached_user_count,
-            ping: shard.latency,
-            uptime: shard.uptime
-        }))
+        // Make sure data.shards exists before trying to map it
+        if (data.shards && Array.isArray(data.shards)) {
+            shards = data.shards.map((shard: any) => ({
+                id: shard.shard_id.toString(),
+                guilds: shard.server_count,
+                users: shard.cached_user_count,
+                ping: parseFloat(shard.latency),
+                uptime: shard.uptime,
+                is_ready: shard.is_ready,
+                last_updated: shard.last_updated
+            }))
+        } else if (Array.isArray(data)) {
+            // If data itself is an array
+            shards = data.map((shard: any) => ({
+                id: shard.shard_id.toString(),
+                guilds: shard.server_count,
+                users: shard.cached_user_count,
+                ping: parseFloat(shard.latency),
+                uptime: shard.uptime,
+                is_ready: shard.is_ready,
+                last_updated: shard.last_updated
+            }))
+        } else if (data && typeof data === 'object') {
+            // Handle case where data is a single object
+            shards = [
+                {
+                    id: data.shard_id?.toString() || "0",
+                    guilds: data.server_count || 0,
+                    users: data.cached_user_count || 0,
+                    ping: parseFloat(data.latency || "0"),
+                    uptime: data.uptime || 0,
+                    is_ready: data.is_ready || false,
+                    last_updated: data.last_updated || 0
+                }
+            ]
+        }
+        
+        console.log("Processed shards:", shards)
     }
 
     const handleSearch = () => {
