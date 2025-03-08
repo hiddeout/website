@@ -22,7 +22,7 @@ const RefundPolicy = () => {
             <div className="mt-10">
                 <div className="bg-stmp-200 border border-stmp-card-border rounded-2xl p-6 text-white">
                     <p className="mb-4 text-xl">Last updated and effective: 2024-01-01</p>
-                    <p className="mb-6">We ("stmp", "stmp Bot", "us", "our") have a strict policy on refunds and will deny you for any refund request for one of the following reasons listed.</p>
+                    <p className="mb-6">We (&ldquo;stmp&rdquo;, &ldquo;stmp Bot&rdquo;, &ldquo;us&rdquo;, &ldquo;our&rdquo;) have a strict policy on refunds and will deny you for any refund request for one of the following reasons listed.</p>
                     
                     <h2 className="text-2xl font-medium mb-4">No refunds will be issued if:</h2>
                     <ul className="list-disc pl-6 space-y-2 mb-6">

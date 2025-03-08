@@ -41,20 +41,14 @@ export const Footer = () => {
                 <div className="flex flex-col items-center sm:items-start">
                     <p className="text-xl font-semibold text-white">Legal</p>
                     <div className="mt-6 flex flex-col items-center sm:items-start gap-y-4">
-                        <Link href="/terms" passHref legacyBehavior>
-                            <a className="font-medium text-stmp-main transition duration-200 ease-linear hover:text-stmp-main/80">
-                                Terms of Service
-                            </a>
+                        <Link href="/terms" className="font-medium text-stmp-main transition duration-200 ease-linear hover:text-stmp-main/80">
+                            Terms of Service
                         </Link>
-                        <Link href="/privacy" passHref legacyBehavior>
-                            <a className="font-medium text-stmp-main transition duration-200 ease-linear hover:text-stmp-main/80">
-                                Privacy Policy
-                            </a>
+                        <Link href="/privacy" className="font-medium text-stmp-main transition duration-200 ease-linear hover:text-stmp-main/80">
+                            Privacy Policy
                         </Link>
-                        <Link href="/refunds" passHref legacyBehavior>
-                            <a className="font-medium text-stmp-main transition duration-200 ease-linear hover:text-stmp-main/80">
-                                Refund Policy
-                            </a>
+                        <Link href="/refunds" className="font-medium text-stmp-main transition duration-200 ease-linear hover:text-stmp-main/80">
+                            Refund Policy
                         </Link>
                     </div>
                 </div>
