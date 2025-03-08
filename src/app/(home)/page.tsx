@@ -7,6 +7,7 @@ import "@/styles/globals.css"
 import { ArrowRightIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { BorderBeam } from "@/components/magicui/border-beam"
+import { Footer } from "@/components/(global)/Footer"
 
 export default function Home() {
     return (
@@ -26,6 +27,8 @@ export default function Home() {
                     
                 </div>
             </div>
+            <Footer />
+
         </>
     )
 }

@@ -29,10 +29,10 @@ export const Footer = () => {
                         <Link href="/invite" className="font-medium text-stmp-main transition duration-200 ease-linear hover:text-stmp-main/80">
                             Invite
                         </Link>
-                        <Link href="https://docs.stmp.dev/" className="font-medium text-stmp-main transition duration-200 ease-linear hover:text-stmp-main/80">
+                        <Link href="https://docs.stmp.dev/" target="_blank" rel="noopener noreferrer" className="font-medium text-stmp-main transition duration-200 ease-linear hover:text-stmp-main/80">
                             Documentation
                         </Link>
-                        <Link href="https://discord.gg/stmp" className="font-medium text-stmp-main transition duration-200 ease-linear hover:text-stmp-main/80">
+                        <Link href="https://discord.gg/stmp" target="_blank" rel="noopener noreferrer" className="font-medium text-stmp-main transition duration-200 ease-linear hover:text-stmp-main/80">
                             Support Server
                         </Link>
                     </div>
@@ -41,14 +41,20 @@ export const Footer = () => {
                 <div className="flex flex-col items-center sm:items-start">
                     <p className="text-xl font-semibold text-white">Legal</p>
                     <div className="mt-6 flex flex-col items-center sm:items-start gap-y-4">
-                        <Link href="/terms" className="font-medium text-stmp-main transition duration-200 ease-linear hover:text-stmp-main/80">
-                            Terms of Service
+                        <Link href="/terms" passHref legacyBehavior>
+                            <a className="font-medium text-stmp-main transition duration-200 ease-linear hover:text-stmp-main/80">
+                                Terms of Service
+                            </a>
                         </Link>
-                        <Link href="/privacy" className="font-medium text-stmp-main transition duration-200 ease-linear hover:text-stmp-main/80">
-                            Privacy Policy
+                        <Link href="/privacy" passHref legacyBehavior>
+                            <a className="font-medium text-stmp-main transition duration-200 ease-linear hover:text-stmp-main/80">
+                                Privacy Policy
+                            </a>
                         </Link>
-                        <Link href="/refunds" className="font-medium text-stmp-main transition duration-200 ease-linear hover:text-stmp-main/80">
-                            Refund Policy
+                        <Link href="/refunds" passHref legacyBehavior>
+                            <a className="font-medium text-stmp-main transition duration-200 ease-linear hover:text-stmp-main/80">
+                                Refund Policy
+                            </a>
                         </Link>
                     </div>
                 </div>
