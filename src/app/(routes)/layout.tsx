@@ -1,5 +1,6 @@
 import { Footer } from "@/components/(global)/Footer"
 import Navbar from "@/components/(global)/navbar/Navbar"
+import { SessionProvider } from "@/providers/SessionProvider"
 import "@/styles/globals.css"
 import type { Metadata, Viewport } from "next"
 import { Manrope } from "next/font/google"
@@ -47,9 +48,11 @@ export default function RootLayout({ children, params }: Props) {
     return (
         <html lang="en">
             <body className={`font-satoshi flex flex-col m-h-screen justify-between`}>
-                <Navbar />
-                {children}
-                <Footer />
+                <SessionProvider>
+                    <Navbar />
+                    {children}
+                    <Footer />
+                </SessionProvider>
             </body>
         </html>
     )

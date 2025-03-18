@@ -1,38 +1,99 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Discord Bot Dashboard
 
-## Getting Started
+A modern dashboard for the stmp Discord bot, built with Next.js, NextAuth.js, and Tailwind CSS.
 
-First, run the development server:
+## Features
+
+- Discord OAuth authentication
+- Server management
+- Bot configuration
+- User-friendly interface
+- Protected dashboard routes
+
+## Setup Instructions
+
+### Prerequisites
+
+- Node.js 16.8.0 or newer
+- npm or yarn
+- A Discord application with a bot
+
+### Discord Developer Portal Setup
+
+1. Go to the [Discord Developer Portal](https://discord.com/developers/applications)
+2. Create a new application or select your existing bot application
+3. Navigate to the "OAuth2" tab
+4. Add a redirect URL: `http://localhost:3000/api/auth/callback/discord` (for development)
+5. Save changes
+6. Note your Client ID and Client Secret for the next step
+
+### Environment Variables
+
+1. Copy the `.env.local` file and update the values:
+
+```
+# NextAuth.js configuration
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=your-secret-key-here # Generate a random string
+
+# Discord OAuth
+DISCORD_CLIENT_ID=your-discord-client-id
+DISCORD_CLIENT_SECRET=your-discord-client-secret
+
+# API URL for your Discord bot backend (if applicable)
+NEXT_PUBLIC_API_URL=http://localhost:8000
+```
+
+### Installation
+
+1. Install dependencies:
+
+```bash
+npm install
+# or
+yarn install
+```
+
+2. Start the development server:
 
 ```bash
 npm run dev
 # or
 yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see.
+3. Visit `http://localhost:3000` in your browser
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Production Deployment
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+When deploying to production:
 
-## Learn More
+1. Update the `NEXTAUTH_URL` to your production URL
+2. Update the redirect URL in the Discord Developer Portal to include your production callback URL
+3. Generate a strong random string for `NEXTAUTH_SECRET`
 
-To learn more about Next.js, take a look at the following resources:
+## Integration with Your Discord Bot
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+To connect this dashboard with your Discord bot:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+1. Create a backend API for your bot
+2. Implement endpoints for:
+   - Server management
+   - Bot configuration
+   - Analytics
+3. Update the API calls in the dashboard to use your bot's API
 
-## Deploy on Vercel
+## File Structure
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- `/app/api/auth/[...nextauth]` - NextAuth.js configuration
+- `/app/(routes)/dashboard` - Dashboard pages
+- `/components/dashboard` - Dashboard components
+- `/providers` - React providers
+- `/middleware.ts` - Route protection
+- `/types` - TypeScript type definitions
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+## License
+
+[MIT](LICENSE)
 
 
