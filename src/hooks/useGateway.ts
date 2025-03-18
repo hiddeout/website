@@ -28,6 +28,7 @@ export function useGateway(guildId: string | null, options?: GatewayOptions) {
     const socketRef = useRef<WebSocket | null>(null)
     const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null)
     const lastHeartbeatAckRef = useRef<boolean>(false)
+    const isConnectingRef = useRef<boolean>(false)
     
     const send = useCallback((event: string, data: any = {}) => {
         if (socketRef.current?.readyState === WebSocket.OPEN) {
@@ -51,24 +52,29 @@ export function useGateway(guildId: string | null, options?: GatewayOptions) {
         setState(prev => ({ ...prev, connected: false }))
     }, [])
     
-    const connect = useCallback(() => {
-        if (!guildId) return
+    const connect = useCallback(async () => {
+        if (!guildId || isConnectingRef.current || socketRef.current) return
+        
+        isConnectingRef.current = true
         
         try {
-            const socket = api.createGatewayConnection(guildId)
+            const socket = await api.createGatewayConnection(guildId)
             socketRef.current = socket
             
             socket.onopen = () => {
                 setState(prev => ({ ...prev, connected: true, error: null }))
+                isConnectingRef.current = false
             }
             
             socket.onclose = () => {
                 disconnect()
+                isConnectingRef.current = false
             }
             
             socket.onerror = (error) => {
                 setState(prev => ({ ...prev, error: new Error("WebSocket error") }))
                 disconnect()
+                isConnectingRef.current = false
             }
             
             socket.onmessage = (event) => {
@@ -88,7 +94,7 @@ export function useGateway(guildId: string | null, options?: GatewayOptions) {
                                 if (!lastHeartbeatAckRef.current) {
                                     // No heartbeat acknowledgement, reconnect
                                     disconnect()
-                                    setTimeout(connect, 5000)
+                                    setTimeout(() => connect(), 5000)
                                     return
                                 }
                                 
@@ -121,15 +127,19 @@ export function useGateway(guildId: string | null, options?: GatewayOptions) {
         } catch (error) {
             console.error("Failed to connect to gateway", error)
             setState(prev => ({ ...prev, error: error as Error }))
+            isConnectingRef.current = false
         }
     }, [guildId, disconnect, send, options])
     
     useEffect(() => {
-        if (guildId) {
-            connect()
+        let isMounted = true
+        
+        if (guildId && isMounted && !isConnectingRef.current && !socketRef.current) {
+            connect();
         }
         
         return () => {
+            isMounted = false
             disconnect()
         }
     }, [guildId, connect, disconnect])

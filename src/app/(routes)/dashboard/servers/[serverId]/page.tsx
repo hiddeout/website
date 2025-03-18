@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import { useSession } from "next-auth/react"
 import { useParams, useRouter } from "next/navigation"
 import { FaSave, FaArrowLeft, FaCog, FaPencilAlt, FaBell } from "react-icons/fa"
@@ -31,27 +31,42 @@ export default function ServerConfigPage() {
     })
     const [activeTab, setActiveTab] = useState("general")
     
-    // Connect to WebSocket for real-time updates
-    const gateway = useGateway(serverId, {
-        onEvent: (event, data) => {
-            // Handle server-specific events
-            if (event === "SETTINGS_UPDATE") {
-                setSettings(prev => ({ ...prev, ...data }))
-            }
+    // Memoize the gateway handler to prevent recreation on each render
+    const handleGatewayEvent = useCallback((event: string, data: any) => {
+        if (event === "SETTINGS_UPDATE") {
+            setSettings(prev => ({ ...prev, ...data }))
         }
-    })
+    }, [])
+    
+    // Memoize gateway options
+    const gatewayOptions = useMemo(() => ({
+        onEvent: handleGatewayEvent
+    }), [handleGatewayEvent])
+    
+    // Connect to WebSocket for real-time updates
+    const gateway = useGateway(serverId, gatewayOptions)
     
     // Fetch server data
     useEffect(() => {
+        let isMounted = true
+        
         async function fetchServer() {
+            if (!session?.accessToken || !serverId) return
+            
             try {
                 setLoading(true)
                 const serverData = await api.getGuild(serverId)
+                
+                if (!isMounted) return
+                
                 setServer(serverData)
                 
                 // You would also fetch settings here
                 try {
                     const settingsData = await api.request<any>(`/@me/guilds/${serverId}/settings`)
+                    
+                    if (!isMounted) return
+                    
                     setSettings({
                         prefix: settingsData.prefix || "!",
                         modules: settingsData.modules || {
@@ -70,14 +85,20 @@ export default function ServerConfigPage() {
                 }
             } catch (err) {
                 console.error("Failed to fetch server", err)
-                setError("Failed to load server data. Make sure the bot is in this server and you have the required permissions.")
+                if (isMounted) {
+                    setError("Failed to load server data. Make sure the bot is in this server and you have the required permissions.")
+                }
             } finally {
-                setLoading(false)
+                if (isMounted) {
+                    setLoading(false)
+                }
             }
         }
         
-        if (session?.accessToken && serverId) {
-            fetchServer()
+        fetchServer()
+        
+        return () => {
+            isMounted = false
         }
     }, [session, serverId])
 
@@ -110,13 +131,13 @@ export default function ServerConfigPage() {
     }
 
     const handleModuleToggle = (module: string) => {
-        setSettings({
-            ...settings,
+        setSettings(prev => ({
+            ...prev,
             modules: {
-                ...settings.modules,
-                [module]: !settings.modules[module as keyof typeof settings.modules]
+                ...prev.modules,
+                [module]: !prev.modules[module as keyof typeof prev.modules]
             }
-        })
+        }))
     }
     
     if (loading) {

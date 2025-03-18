@@ -1,8 +1,8 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { useSession } from "next-auth/react"
-import { FaServer, FaUsers, FaRobot, FaClock } from "react-icons/fa"
+import { FaServer, FaUsers, FaRobot, FaClock, FaDiscord, FaExclamationTriangle } from "react-icons/fa"
 import { api } from "@/lib/api"
 
 // Placeholder card component for dashboard stats
@@ -24,55 +24,83 @@ function StatCard({ icon: Icon, title, value, className }: {
 }
 
 export default function DashboardPage() {
-    const { data: session } = useSession()
+    const { data: session, status } = useSession()
     const [user, setUser] = useState<any>(null)
     const [guilds, setGuilds] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
 
     // Fetch user data and guilds from API
-    useEffect(() => {
-        async function fetchData() {
-            try {
-                setLoading(true)
-                const userData = await api.getUserInfo()
-                const guildsData = await api.getGuilds()
-                
-                setUser(userData)
-                setGuilds(guildsData)
-                
-            } catch (err) {
-                console.error("Failed to fetch dashboard data", err)
-                setError("Failed to load dashboard data. Please try again later.")
-            } finally {
-                setLoading(false)
-            }
-        }
+    const fetchData = useCallback(async () => {
+        if (!session?.accessToken) return
         
-        if (session?.accessToken) {
-            fetchData()
+        try {
+            setLoading(true)
+            setError(null)
+            
+            console.log("Session token:", session.accessToken.substring(0, 10) + "...")
+            
+            try {
+                const userData = await api.getUserInfo()
+                setUser(userData)
+                console.log("User data loaded:", userData)
+            } catch (userErr) {
+                console.error("Failed to fetch user data:", userErr)
+            }
+            
+            try {
+                const guildsData = await api.getGuilds()
+                setGuilds(guildsData)
+                console.log("Guilds loaded:", guildsData)
+            } catch (guildErr: any) {
+                console.error("Failed to fetch guilds:", guildErr)
+                setError(`Failed to load servers: ${guildErr.message || "Unknown error"}`)
+            }
+        } catch (err: any) {
+            console.error("Failed to fetch dashboard data", err)
+            setError(`Failed to load dashboard data: ${err.message || "Unknown error"}`)
+        } finally {
+            setLoading(false)
         }
     }, [session])
+    
+    useEffect(() => {
+        if (session?.accessToken) {
+            fetchData()
+        } else if (status === "unauthenticated") {
+            setLoading(false)
+        }
+    }, [session, status, fetchData])
+
+    if (status === "loading") {
+        return (
+            <div className="flex min-h-[50vh] items-center justify-center">
+                <div className="h-10 w-10 animate-spin rounded-full border-2 border-zinc-300 border-t-transparent"></div>
+                <span className="ml-3 text-zinc-400">Loading session...</span>
+            </div>
+        )
+    }
+
+    if (status === "unauthenticated") {
+        return (
+            <div className="rounded-lg border border-yellow-800 bg-yellow-900/20 p-6 text-center">
+                <h2 className="mb-2 text-xl font-semibold text-white">Authentication Required</h2>
+                <p className="mb-4 text-yellow-200">Please log in with your Discord account to view your dashboard.</p>
+                <a 
+                    href="/login"
+                    className="inline-block rounded-md bg-zinc-800 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700"
+                >
+                    Login with Discord
+                </a>
+            </div>
+        )
+    }
 
     if (loading) {
         return (
             <div className="flex min-h-[50vh] items-center justify-center">
                 <div className="h-10 w-10 animate-spin rounded-full border-2 border-zinc-300 border-t-transparent"></div>
-            </div>
-        )
-    }
-
-    if (error) {
-        return (
-            <div className="rounded-lg border border-red-800 bg-red-900/20 p-6 text-center">
-                <h2 className="mb-2 text-xl font-semibold text-white">Error</h2>
-                <p className="text-red-200">{error}</p>
-                <button
-                    onClick={() => window.location.reload()}
-                    className="mt-4 rounded-md bg-zinc-800 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700"
-                >
-                    Retry
-                </button>
+                <span className="ml-3 text-zinc-400">Loading dashboard data...</span>
             </div>
         )
     }
@@ -114,6 +142,24 @@ export default function DashboardPage() {
                 </p>
             </div>
 
+            {error && (
+                <div className="rounded-lg border border-red-800 bg-red-900/20 p-4 text-red-200">
+                    <div className="flex items-center">
+                        <FaExclamationTriangle className="mr-2 h-5 w-5 text-red-400" />
+                        <span className="font-medium">Error:</span>
+                        <span className="ml-2">{error}</span>
+                    </div>
+                    <div className="mt-2 flex justify-end">
+                        <button
+                            onClick={fetchData}
+                            className="rounded bg-red-800 px-3 py-1 text-sm font-medium text-white hover:bg-red-700"
+                        >
+                            Retry
+                        </button>
+                    </div>
+                </div>
+            )}
+
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
                 {stats.map((stat) => (
                     <StatCard
@@ -152,11 +198,31 @@ export default function DashboardPage() {
                                         {guild.bot ? "Bot is in server" : "Bot not in server"}
                                     </p>
                                 </div>
+                                {guild.bot && (
+                                    <a 
+                                        href={`/dashboard/servers/${guild.id}`}
+                                        className="rounded bg-stmp-main px-3 py-1 text-xs font-medium text-white hover:bg-stmp-main/80"
+                                    >
+                                        Manage
+                                    </a>
+                                )}
                             </div>
                         ))
                     ) : (
-                        <div className="col-span-full text-center text-zinc-400">
-                            No servers found. Make sure you have the required permissions.
+                        <div className="col-span-full flex flex-col items-center gap-3 py-8 text-center text-zinc-400">
+                            <FaDiscord className="h-12 w-12 text-zinc-600" />
+                            <div>
+                                <p className="font-medium text-zinc-300">No servers found</p>
+                                <p className="mt-1 text-sm">Make sure you have the required permissions</p>
+                            </div>
+                            <a
+                                href="/invite"
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="mt-2 inline-flex items-center rounded-md bg-stmp-main px-4 py-2 text-sm font-medium text-white hover:bg-stmp-main/80"
+                            >
+                                Add Bot to Server
+                            </a>
                         </div>
                     )}
                 </div>
