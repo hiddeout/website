@@ -1,4 +1,4 @@
-# Discord Bot Dashboard
+# SHIT WEBSITE I TRIED TO MAKE < HAVE IT I DONT WANT IT
 
 A modern dashboard for the stmp Discord bot, built with Next.js, NextAuth.js, and Tailwind CSS.
 
@@ -91,6 +91,7 @@ To connect this dashboard with your Discord bot:
 - `/providers` - React providers
 - `/middleware.ts` - Route protection
 - `/types` - TypeScript type definitions
+
 
 ## License
 
